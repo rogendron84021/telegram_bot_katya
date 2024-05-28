@@ -21,9 +21,7 @@ cat_pics_folder = 'cat_pics/'
 MY_USER_ID = 354635440  # замените на свой фактический user_id
 
 # Прокси-сервер
-PROXY_URL = "socks5://<IP>:<PORT>"
-PROXY_USERNAME = ""
-PROXY_PASSWORD = ""
+PROXY_URL = "http://196.223.129.21:80"
 
 # Функция для отправки случайной фразы признания
 async def love_confession(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -55,7 +53,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
     logger.info(f"Chat ID: {chat_id}")
-    
+
     keyboard = [
         [
             InlineKeyboardButton("Признание в любви", callback_data='love_confession'),
@@ -85,10 +83,10 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_name = update.message.from_user.username or update.message.from_user.first_name
     user_id = update.message.from_user.id
     notification_message = f"Пользователь {user_name} написал: {user_message}\nChat ID: {user_id}"
-    
+
     # Отправка уведомления тебе
     await context.bot.send_message(chat_id=MY_USER_ID, text=notification_message)
-    
+
     # Ответ пользователю
     await update.message.reply_text("Ваше сообщение было получено!")
 
@@ -117,7 +115,7 @@ def main() -> None:
     # Запускаем бота и планировщик
     chat_id = MY_USER_ID  # замените на ваш фактический chat_id
     schedule_jobs(application, chat_id)
-    
+
     application.run_polling(timeout=120, read_timeout=120)
 
 if __name__ == '__main__':

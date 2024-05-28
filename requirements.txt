@@ -1,2 +1,2 @@
-python-telegram-bot[job-queue]==20.0
-requests[socks]
+python-telegram-bot[socks]
+httpx[socks]
