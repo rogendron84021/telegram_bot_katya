@@ -105,7 +105,7 @@ def schedule_jobs(application: Application, chat_id: int) -> None:
 
 def main() -> None:
     # Вставь сюда свой токен
-    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").proxy_url(PROXY_URL).build()
+    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").proxy(PROXY_URL).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
