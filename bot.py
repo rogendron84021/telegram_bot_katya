@@ -99,11 +99,14 @@ def schedule_jobs(application: Application, chat_id: int) -> None:
 def main() -> None:
     # Настройка запроса с прокси
     request_kwargs = {
-        "proxy": PROXY_URL
+        "proxies": {
+            "http": PROXY_URL,
+            "https": PROXY_URL,
+        }
     }
 
     # Создание приложения
-    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").request(HTTPXRequest(request_kwargs=request_kwargs)).build()
+    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").request(HTTPXRequest(**request_kwargs)).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))

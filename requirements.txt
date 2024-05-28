@@ -1,3 +1,2 @@
-python-telegram-bot==20.3
-apscheduler==3.9.1.post1
-httpx[socks]==0.24.0
+python-telegram-bot==20.0
+httpx[socks]==0.21.1
