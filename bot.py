@@ -107,7 +107,7 @@ def main() -> None:
     chat_id = MY_USER_ID  # замените на ваш фактический chat_id
     schedule_jobs(application, chat_id)
 
-    application.run_polling(timeout=120, read_timeout=120)
+    application.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__ == '__main__':
     main()
