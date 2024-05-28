@@ -104,7 +104,7 @@ def schedule_jobs(application: Application, chat_id: int) -> None:
 
 def main() -> None:
     # Вставь сюда свой токен
-    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").proxy(PROXY_URL).build()
+    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").proxy(PROXY_URL).get_updates_timeout(120).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
@@ -115,7 +115,7 @@ def main() -> None:
     chat_id = MY_USER_ID  # замените на ваш фактический chat_id
     schedule_jobs(application, chat_id)
 
-    application.run_polling(timeout=120, read_timeout=120)
+    application.run_polling()
 
 if __name__ == '__main__':
     main()
