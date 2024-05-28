@@ -1,12 +1,12 @@
 import logging
 import random
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes, JobQueue
 import os
 import datetime
 
 # Включаем логирование
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levellevel)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Чтение фраз признаний
@@ -82,16 +82,16 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 # Периодические сообщения
 async def send_good_night(context: ContextTypes.DEFAULT_TYPE) -> None:
-    await context.bot.send_message(chat_id=context.job.context['chat_id'], text="Сладких снов, любимый котёнок")
+    await context.bot.send_message(chat_id=context.job.context, text="Сладких снов, любимый котёнок")
 
 async def send_good_morning(context: ContextTypes.DEFAULT_TYPE) -> None:
-    await context.bot.send_message(chat_id=context.job.context['chat_id'], text="Доброе утро, любимый котёнок, хорошего тебе дня")
+    await context.bot.send_message(chat_id=context.job.context, text="Доброе утро, любимый котёнок, хорошего тебе дня")
 
 def schedule_jobs(application: Application, chat_id: int) -> None:
     job_queue = application.job_queue
 
-    job_queue.run_daily(send_good_night, time=datetime.time(hour=0, minute=0, second=0), context={'chat_id': chat_id})
-    job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), context={'chat_id': chat_id})
+    job_queue.run_daily(send_good_night, time=datetime.time(hour=0, minute=0, second=0), context=chat_id)
+    job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), context=chat_id)
 
 def main() -> None:
     # Вставь сюда свой токен
