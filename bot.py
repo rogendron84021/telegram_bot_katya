@@ -4,7 +4,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 import os
 import datetime
-from telegram.request import HTTPXRequest
+from aiohttp import ClientSession
+from aiohttp_socks import ProxyConnector
 
 # Включаем логирование
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -20,8 +21,12 @@ cat_pics_folder = 'cat_pics/'
 # Твой user_id
 MY_USER_ID = 354635440  # замените на свой фактический user_id
 
-# Прокси-сервер
-PROXY_URL = "http://196.223.129.21:80"
+# Прокси настройки
+PROXY_URL = "http://196.223.129.21:80"  # замените на фактический URL
+
+# Настройка прокси-соединения
+connector = ProxyConnector.from_url(PROXY_URL)
+session = ClientSession(connector=connector)
 
 # Функция для отправки случайной фразы признания
 async def love_confession(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -97,16 +102,8 @@ def schedule_jobs(application: Application, chat_id: int) -> None:
     job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), data=chat_id)
 
 def main() -> None:
-    # Настройка запроса с прокси
-    request_kwargs = {
-        "proxies": {
-            "http": PROXY_URL,
-            "https": PROXY_URL,
-        }
-    }
-
-    # Создание приложения
-    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").request(HTTPXRequest(**request_kwargs)).build()
+    # Вставь сюда свой токен
+    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").session(session).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
