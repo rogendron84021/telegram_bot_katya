@@ -4,6 +4,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 import os
 import datetime
+from telegram.request import HTTPXRequest
 
 # Включаем логирование
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -46,7 +47,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
     logger.info(f"Chat ID: {chat_id}")
-
+    
     keyboard = [
         [
             InlineKeyboardButton("Признание в любви", callback_data='love_confession'),
@@ -76,10 +77,10 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_name = update.message.from_user.username or update.message.from_user.first_name
     user_id = update.message.from_user.id
     notification_message = f"Пользователь {user_name} написал: {user_message}\nChat ID: {user_id}"
-
+    
     # Отправка уведомления тебе
     await context.bot.send_message(chat_id=MY_USER_ID, text=notification_message)
-
+    
     # Ответ пользователю
     await update.message.reply_text("Ваше сообщение было получено!")
 
@@ -96,7 +97,13 @@ def schedule_jobs(application: Application, chat_id: int) -> None:
     job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), data=chat_id)
 
 def main() -> None:
-    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").proxy_url(PROXY_URL).build()
+    # Настройка запроса с прокси
+    request_kwargs = {
+        "proxy": PROXY_URL
+    }
+
+    # Создание приложения
+    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").request(HTTPXRequest(request_kwargs=request_kwargs)).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
@@ -106,7 +113,7 @@ def main() -> None:
     # Запускаем бота и планировщик
     chat_id = MY_USER_ID  # замените на ваш фактический chat_id
     schedule_jobs(application, chat_id)
-
+    
     application.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__ == '__main__':
