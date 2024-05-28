@@ -1,14 +1,13 @@
 import logging
 import random
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 import os
 import datetime
-from aiohttp import ClientSession
-from aiohttp_socks import ProxyConnector
-from telegram.request import HTTPXRequest
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
+from aiohttp import ClientSession, TCPConnector
+import httpx
 
-# Включаем логирование
+# Настройка логирования
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -22,42 +21,17 @@ cat_pics_folder = 'cat_pics/'
 # Твой user_id
 MY_USER_ID = 354635440  # замените на свой фактический user_id
 
-# Прокси настройки
-PROXY_URL = "http://196.223.129.21:80"  # замените на фактический URL
+# Настройка прокси
+PROXY_URL = "http://196.223.129.21:80"
 
-async def create_application():
-    # Настройка прокси-соединения
-    connector = ProxyConnector.from_url(PROXY_URL)
-    session = ClientSession(connector=connector)
-
-    request = HTTPXRequest(proxy=PROXY_URL)
-
-    # Создаем приложение Telegram
-    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").request(request).build()
-
-    # Добавляем обработчики команд
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button))
-    application.add_handler(CommandHandler("send", send))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-
-    # Запускаем планировщик задач
-    chat_id = MY_USER_ID  # замените на ваш фактический chat_id
-    schedule_jobs(application, chat_id)
-
-    return application
-
-# Функция для отправки случайной фразы признания
 async def love_confession(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = random.choice(love_messages).strip()
     await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
-# Функция для отправки случайной фотографии котика
 async def show_cat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     cat_pic = random.choice(os.listdir(cat_pics_folder))
     await context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(os.path.join(cat_pics_folder, cat_pic), 'rb'))
 
-# Обработчик кнопок
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
@@ -67,11 +41,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     elif query.data == 'show_cat':
         await show_cat(update, context)
 
-# Команда /start для начала работы с ботом
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
     logger.info(f"Chat ID: {chat_id}")
-    
+
     keyboard = [
         [
             InlineKeyboardButton("Признание в любви", callback_data='love_confession'),
@@ -82,7 +55,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('Выбери действие:', reply_markup=reply_markup)
 
-# Команда /send для отправки сообщения пользователю
 async def send(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     if user_id == MY_USER_ID:
@@ -95,35 +67,45 @@ async def send(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         await update.message.reply_text('У вас нет прав для использования этой команды.')
 
-# Обработчик всех текстовых сообщений
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_message = update.message.text
     user_name = update.message.from_user.username or update.message.from_user.first_name
     user_id = update.message.from_user.id
     notification_message = f"Пользователь {user_name} написал: {user_message}\nChat ID: {user_id}"
-    
-    # Отправка уведомления тебе
+
     await context.bot.send_message(chat_id=MY_USER_ID, text=notification_message)
-    
-    # Ответ пользователю
     await update.message.reply_text("Ваше сообщение было получено!")
 
-# Периодические сообщения
 async def send_good_night(context: ContextTypes.DEFAULT_TYPE) -> None:
-    await context.bot.send_message(chat_id=context.job.data, text="Сладких снов, любимый котёнок")
+    await context.bot.send_message(chat_id=context.job.chat_id, text="Сладких снов, любимый котёнок")
 
 async def send_good_morning(context: ContextTypes.DEFAULT_TYPE) -> None:
-    await context.bot.send_message(chat_id=context.job.data, text="Доброе утро, любимый котёнок, хорошего тебе дня")
+    await context.bot.send_message(chat_id=context.job.chat_id, text="Доброе утро, любимый котёнок, хорошего тебе дня")
 
 def schedule_jobs(application: Application, chat_id: int) -> None:
     job_queue = application.job_queue
+
     job_queue.run_daily(send_good_night, time=datetime.time(hour=23, minute=59, second=0), data=chat_id)
     job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), data=chat_id)
 
+async def create_application() -> Application:
+    connector = TCPConnector(ssl=False)
+    async with ClientSession(connector=connector) as session:
+        async with httpx.AsyncClient(proxies=PROXY_URL) as client:
+            return Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").httpx_client(client).build()
+
 def main() -> None:
-    import asyncio
     loop = asyncio.get_event_loop()
     application = loop.run_until_complete(create_application())
+
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(button))
+    application.add_handler(CommandHandler("send", send))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+
+    chat_id = MY_USER_ID  # замените на ваш фактический chat_id
+    schedule_jobs(application, chat_id)
+
     application.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__ == '__main__':
