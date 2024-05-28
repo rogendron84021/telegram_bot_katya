@@ -6,7 +6,7 @@ import os
 import datetime
 
 # Включаем логирование
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levellevel)s - %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Чтение фраз признаний
@@ -90,8 +90,8 @@ async def send_good_morning(context: ContextTypes.DEFAULT_TYPE) -> None:
 def schedule_jobs(application: Application, chat_id: int) -> None:
     job_queue = application.job_queue
 
-    job_queue.run_daily(send_good_night, time=datetime.time(hour=0, minute=0, second=0), chat_id=chat_id)
-    job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), chat_id=chat_id)
+    job_queue.run_daily(send_good_night, time=datetime.time(hour=0, minute=0, second=0), days=(0, 1, 2, 3, 4, 5, 6), context={'chat_id': chat_id})
+    job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), days=(0, 1, 2, 3, 4, 5, 6), context={'chat_id': chat_id})
 
 def main() -> None:
     # Вставь сюда свой токен
