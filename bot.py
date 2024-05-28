@@ -6,6 +6,7 @@ import os
 import datetime
 from aiohttp import ClientSession
 from aiohttp_socks import ProxyConnector
+from telegram.request import HTTPXRequest
 
 # Включаем логирование
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -24,9 +25,27 @@ MY_USER_ID = 354635440  # замените на свой фактический 
 # Прокси настройки
 PROXY_URL = "http://196.223.129.21:80"  # замените на фактический URL
 
-# Настройка прокси-соединения
-connector = ProxyConnector.from_url(PROXY_URL)
-session = ClientSession(connector=connector)
+async def create_application():
+    # Настройка прокси-соединения
+    connector = ProxyConnector.from_url(PROXY_URL)
+    session = ClientSession(connector=connector)
+
+    request = HTTPXRequest(proxy=PROXY_URL)
+
+    # Создаем приложение Telegram
+    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").request(request).build()
+
+    # Добавляем обработчики команд
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(button))
+    application.add_handler(CommandHandler("send", send))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+
+    # Запускаем планировщик задач
+    chat_id = MY_USER_ID  # замените на ваш фактический chat_id
+    schedule_jobs(application, chat_id)
+
+    return application
 
 # Функция для отправки случайной фразы признания
 async def love_confession(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -102,18 +121,9 @@ def schedule_jobs(application: Application, chat_id: int) -> None:
     job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), data=chat_id)
 
 def main() -> None:
-    # Вставь сюда свой токен
-    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").session(session).build()
-
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button))
-    application.add_handler(CommandHandler("send", send))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-
-    # Запускаем бота и планировщик
-    chat_id = MY_USER_ID  # замените на ваш фактический chat_id
-    schedule_jobs(application, chat_id)
-    
+    import asyncio
+    loop = asyncio.get_event_loop()
+    application = loop.run_until_complete(create_application())
     application.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__ == '__main__':
