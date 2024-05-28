@@ -6,7 +6,7 @@ import os
 import datetime
 
 # Включаем логирование
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levellevel)s - %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Чтение фраз признаний
@@ -103,7 +103,7 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
     # Запускаем бота и планировщик
-    chat_id = 354635440  # замените на ваш фактический chat_id
+    chat_id = MY_USER_ID  # замените на ваш фактический chat_id
     schedule_jobs(application, chat_id)
     
     application.run_polling()
