@@ -103,8 +103,13 @@ def schedule_jobs(application: Application, chat_id: int) -> None:
     job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), data=chat_id)
 
 def main() -> None:
-    # Вставь сюда свой токен
-    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").proxy(PROXY_URL).get_updates_timeout(120).build()
+    request_kwargs = {
+        'proxy_url': PROXY_URL,
+        'connect_timeout': 120,
+        'read_timeout': 120
+    }
+
+    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").request_kwargs(request_kwargs).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
