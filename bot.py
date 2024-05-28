@@ -1,7 +1,7 @@
 import logging
 import random
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes, JobQueue
 import os
 import datetime
 
@@ -88,10 +88,13 @@ async def send_good_morning(context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_message(chat_id=context.job.chat_id, text="Доброе утро, любимый котёнок, хорошего тебе дня")
 
 def schedule_jobs(application: Application, chat_id: int) -> None:
-    job_queue = application.job_queue
+    job_queue = JobQueue()
+    job_queue.set_dispatcher(application.dispatcher)
 
     job_queue.run_daily(send_good_night, time=datetime.time(hour=0, minute=0, second=0), chat_id=chat_id)
     job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), chat_id=chat_id)
+
+    job_queue.start()
 
 def main() -> None:
     # Вставь сюда свой токен
