@@ -4,7 +4,6 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 import os
 import datetime
-from telegram.error import TimedOut
 
 # Включаем логирование
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -25,19 +24,13 @@ PROXY_URL = "http://196.223.129.21:80"
 
 # Функция для отправки случайной фразы признания
 async def love_confession(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    try:
-        message = random.choice(love_messages).strip()
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-    except TimedOut:
-        logger.error("Request timed out while sending love confession.")
+    message = random.choice(love_messages).strip()
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 # Функция для отправки случайной фотографии котика
 async def show_cat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    try:
-        cat_pic = random.choice(os.listdir(cat_pics_folder))
-        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(os.path.join(cat_pics_folder, cat_pic), 'rb'))
-    except TimedOut:
-        logger.error("Request timed out while sending cat picture.")
+    cat_pic = random.choice(os.listdir(cat_pics_folder))
+    await context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(os.path.join(cat_pics_folder, cat_pic), 'rb'))
 
 # Обработчик кнопок
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -103,13 +96,7 @@ def schedule_jobs(application: Application, chat_id: int) -> None:
     job_queue.run_daily(send_good_morning, time=datetime.time(hour=10, minute=0, second=0), data=chat_id)
 
 def main() -> None:
-    request_kwargs = {
-        'proxy_url': PROXY_URL,
-        'connect_timeout': 120,
-        'read_timeout': 120
-    }
-
-    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").request_kwargs(request_kwargs).build()
+    application = Application.builder().token("6985004195:AAHjLqBd8TscIR4y68FGViUqI--BieT25bk").proxy_url(PROXY_URL).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
@@ -120,7 +107,7 @@ def main() -> None:
     chat_id = MY_USER_ID  # замените на ваш фактический chat_id
     schedule_jobs(application, chat_id)
 
-    application.run_polling()
+    application.run_polling(timeout=120, read_timeout=120)
 
 if __name__ == '__main__':
     main()
